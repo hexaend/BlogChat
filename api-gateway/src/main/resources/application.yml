@@ -22,7 +22,7 @@ spring:
                 service-id: config-server
 
 
-### END CLOUD CONFIGURATION ###
+        ### END CLOUD CONFIGURATION ###
 
 
         gateway:
@@ -47,7 +47,19 @@ spring:
                         - RewritePath=/api/post/(?<path>.*), /$\{path}
 
 
-
+    security:
+        oauth2:
+            client:
+                provider:
+                    keycloak:
+                        issuer-uri: http://localhost:7080/realms/blog-chat
+                registration:
+                    keycloak:
+                        provider: keycloak
+                        client-id: backend
+                        client-secret: rqaXSHsefdUemIIvyyRAdKaLxomvzYhU
+                        authorization-grant-type: authorization_code
+                        scope: openid, profile, email, roles
 
 ### END EUREKA AND CONFIG SERVER CONFIGURATION ###
 

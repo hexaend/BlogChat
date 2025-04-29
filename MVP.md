@@ -35,9 +35,6 @@
 - Spring Cloud Eureka для сервис-дискавери.
 - Spring Cloud Circuit Breaker для обработки ошибок.
 
-## Выбор технологий:
-- Keycloak или JWT для авторизации.
-
 ## Основные микросервисы:
 - [ ] auth-service - сервис авторизации.
 - [ ] api-gateway - сервис API Gateway.
@@ -48,7 +45,7 @@
 
 ## Примерный план:
 - [x] Реализация основной инфраструктуры (api-gateway, eureka, config-service).
-- [ ] Реализация сервиса авторизации (auth-service).
+- [ ] Реализация сервиса авторизации, с помощью Keycloak (auth-service).
 - [ ] Реализация сервиса постов (post-service).
 - [ ] Реализация сервиса чатов (chat-service).
 - [ ] Реализация docker
