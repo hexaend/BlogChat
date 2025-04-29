@@ -1,0 +1,53 @@
+### Spring Cloud Gateway Configuration ###
+### NO CHANGE THIS FILE ###
+
+
+eureka:
+    client:
+        service-url:
+            defaultZone: http://localhost:8761/eureka/
+
+
+spring:
+    application:
+        name: api-gateway
+
+    config:
+        import: "configserver:"
+
+    cloud:
+        config:
+            discovery:
+                enabled: true
+                service-id: config-server
+
+
+### END CLOUD CONFIGURATION ###
+
+
+        gateway:
+            discovery:
+                locator:
+                    enabled: true
+                    lowerCaseServiceId: true
+
+            routes:
+                -   id: chat-service
+                    uri: lb://chat-service
+                    predicates:
+                        - Path=/api/chat/**
+                    filters:
+                        - RewritePath=/api/chat/(?<path>.*), /$\{path}
+
+                -   id: post-service
+                    uri: lb://post-service
+                    predicates:
+                        - Path=/api/post/**
+                    filters:
+                        - RewritePath=/api/post/(?<path>.*), /$\{path}
+
+
+
+
+### END EUREKA AND CONFIG SERVER CONFIGURATION ###
+
