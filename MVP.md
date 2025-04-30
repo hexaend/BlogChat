@@ -36,8 +36,8 @@
 - Spring Cloud Circuit Breaker для обработки ошибок.
 
 ## Основные микросервисы:
-- [ ] auth-service - сервис авторизации.
-- [ ] api-gateway - сервис API Gateway.
+- [x] auth-service - сервис авторизации.
+- [x] api-gateway - сервис API Gateway.
 - [ ] post-service - сервис постов.
 - [x] eureka - сервис Eureka.
 - [ ] chat-service - сервис чатов.
@@ -45,7 +45,7 @@
 
 ## Примерный план:
 - [x] Реализация основной инфраструктуры (api-gateway, eureka, config-service).
-- [ ] Реализация сервиса авторизации, с помощью Keycloak (auth-service).
+- [x] Реализация сервиса авторизации, с помощью Keycloak (auth-service).
 - [ ] Реализация сервиса постов (post-service).
 - [ ] Реализация сервиса чатов (chat-service).
 - [ ] Реализация docker
