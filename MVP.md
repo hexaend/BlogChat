@@ -42,11 +42,13 @@
 - [x] eureka - сервис Eureka.
 - [ ] chat-service - сервис чатов.
 - [x] config-service - сервис конфигурации.
+- [ ] user-service - сервис пользователей.
 
 ## Примерный план:
 - [x] Реализация основной инфраструктуры (api-gateway, eureka, config-service).
 - [x] Реализация сервиса авторизации, с помощью Keycloak (auth-service).
 - [ ] Реализация сервиса постов (post-service).
+- [ ] Реализация сервиса пользователей (user-service).
 - [ ] Реализация сервиса чатов (chat-service).
 - [ ] Реализация docker
 
