@@ -9,12 +9,16 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
 import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestCustomizers;
 import org.springframework.security.oauth2.client.web.server.DefaultServerOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizationRequestResolver;
 import org.springframework.security.oauth2.client.web.server.ServerOAuth2AuthorizedClientRepository;
+import org.springframework.security.oauth2.core.OAuth2AccessToken;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.authentication.logout.*;
@@ -81,33 +85,16 @@ public class SecurityConfig {
 }
 
 @RestController
-class TestController {
+class AuthInfoController {
 
-    private static final Logger log = LoggerFactory.getLogger(TestController.class);
+    private static final Logger log = LoggerFactory.getLogger(AuthInfoController.class);
 
-    @GetMapping("/test")
-    public String test(@AuthenticationPrincipal OidcUser oidcUser) {
-        log.info("OIDC User: {}", oidcUser);
+    public OAuth2AccessToken getAccessToken(@RegisteredOAuth2AuthorizedClient OAuth2AuthorizedClient client) {
+        return client.getAccessToken();
+    }
 
-        Map<String, Object> claims = oidcUser.getClaims();
-
-        Object rolesObj = claims.get("spring_roles");
-        List<GrantedAuthority> mappedAuthorities = rolesObj instanceof List<?> list
-                ? list.stream()
-                .map(Object::toString)
-                .filter(a -> a.startsWith("ROLE_"))
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList())
-                : List.of();
-
-        List<GrantedAuthority> authorities = new ArrayList<>(oidcUser.getAuthorities());
-        authorities.addAll(mappedAuthorities);
-
-        var roles = authorities
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .filter(a -> a.startsWith("ROLE_"))
-                .toList();
-        return "Roles: " + roles;
+    @GetMapping("/id-token")
+    public OidcIdToken getIdToken(@AuthenticationPrincipal OidcUser oidcUser) {
+        return oidcUser.getIdToken();
     }
 }

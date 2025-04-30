@@ -26,6 +26,8 @@ spring:
 
 
         gateway:
+
+
             discovery:
                 locator:
                     enabled: true
@@ -45,6 +47,8 @@ spring:
                         - Path=/api/post/**
                     filters:
                         - RewritePath=/api/post/(?<path>.*), /$\{path}
+            default-filters:
+                - TokenRelay=
 
 
     security:

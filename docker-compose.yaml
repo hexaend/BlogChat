@@ -6,7 +6,7 @@ services:
         environment:
             KC_BOOTSTRAP_ADMIN_USERNAME: "admin"
             KC_BOOTSTRAP_ADMIN_PASSWORD: "password"
-            KC_HEALTH_ENABLED: "true"
+            KC_HEALTH_ENABLED: true
 
         healthcheck:
             test: [ "CMD", "curl", "-f", "http://localhost:7080/health/ready" ]
@@ -18,3 +18,32 @@ services:
         ports:
             - "7080:7080"
             - "7443:7443"
+
+    postgres:
+        image: postgres:latest
+        container_name: postgres_container
+        environment:
+            POSTGRES_USER: "spring_admin"
+            POSTGRES_PASSWORD: "password"
+            POSTGRES_DB: "blog_chat"
+            PGDATA: /var/lib/postgresql/data/pgdata
+        ports:
+            - "5432:5432"
+        volumes:
+            - .:/docker-entrypoint-initdb.d
+            - my-data:/var/lib/postgresql/data
+
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U habrpguser -d habrdb" ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+        restart: unless-stopped
+        deploy:
+            resources:
+                limits:
+                    cpus: '1'
+                    memory: 4G
+volumes:
+    my-data:
