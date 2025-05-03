@@ -19,7 +19,8 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.oauth2ResourceServer(oauth -> {
             oauth.jwt(Customizer.withDefaults());
-        }).authorizeHttpRequests(authorizeRequests -> authorizeRequests.anyRequest().authenticated());
+        }).authorizeHttpRequests(authorizeRequests -> authorizeRequests.requestMatchers("/actuator/**", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+                .anyRequest().authenticated());
 
         return httpSecurity.build();
     }

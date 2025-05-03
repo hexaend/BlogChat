@@ -53,6 +53,9 @@ spring:
 
     security:
         oauth2:
+            resourceserver:
+                jwt:
+                    issuer-uri: http://localhost:7080/realms/blog-chat
             client:
                 provider:
                     keycloak:
@@ -61,9 +64,8 @@ spring:
                     keycloak:
                         provider: keycloak
                         client-id: backend
-                        client-secret: rqaXSHsefdUemIIvyyRAdKaLxomvzYhU
+                        client-secret: gQCPs3zXyeZWDWAGW5B3fYUuScRKvzYG
                         authorization-grant-type: authorization_code
                         scope: openid, profile, email, roles
 
 ### END EUREKA AND CONFIG SERVER CONFIGURATION ###
-

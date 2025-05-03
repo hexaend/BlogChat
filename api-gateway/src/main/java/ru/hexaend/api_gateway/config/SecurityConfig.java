@@ -4,11 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.annotation.RegisteredOAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
@@ -26,16 +26,28 @@ import org.springframework.security.web.server.header.ClearSiteDataServerHttpHea
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
     @Bean
+    @Order(1)
+    public SecurityWebFilterChain apiResourceServerChain(ServerHttpSecurity http) {
+        http
+                .authorizeExchange(
+                        exchange -> exchange
+                                .pathMatchers("/actuator/**", "/access-token/**", "/id-token").permitAll()
+                                .anyExchange().authenticated()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+
+        ;
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity httpSecurity,
                                                             ServerOAuth2AuthorizationRequestResolver resolver,
                                                             ServerOAuth2AuthorizedClientRepository auth2AuthorizedClientRepository,
@@ -45,16 +57,23 @@ public class SecurityConfig {
                         exchange -> exchange
                                 .pathMatchers("/actuator/**", "/access-token/**", "/id-token").permitAll()
                                 .anyExchange().authenticated()
-                ).oauth2Login(
+                )
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                .oauth2Login(
                         login -> login
                                 .authorizationRequestResolver(resolver)
                                 .authorizedClientRepository(auth2AuthorizedClientRepository)
                 )
-                .logout(logout -> logout.logoutSuccessHandler(logoutSuccessHandler).logoutHandler(logoutHandler));
+//                .oauth2ResourceServer(oauth2 -> oauth2
+//                        .jwt(Customizer.withDefaults())
+//                )
+                .logout(logout -> logout.logoutSuccessHandler(logoutSuccessHandler).logoutHandler(logoutHandler))
+        ;
 
 
         return httpSecurity.build();
     }
+
 
     @Bean
     ServerOAuth2AuthorizationRequestResolver requestResolver(ReactiveClientRegistrationRepository clientRegistrationRepository) {
@@ -89,6 +108,7 @@ class AuthInfoController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthInfoController.class);
 
+    @GetMapping("/access-token")
     public OAuth2AccessToken getAccessToken(@RegisteredOAuth2AuthorizedClient OAuth2AuthorizedClient client) {
         return client.getAccessToken();
     }
