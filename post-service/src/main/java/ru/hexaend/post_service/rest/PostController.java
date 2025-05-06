@@ -32,8 +32,17 @@ public class PostController {
             description = "Get all posts with pagination and sorting. For users. Excludes deleted posts."
     )
     @GetMapping("/all")
-    public ResponseEntity<?> getAllPosts(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "id") String sort, @RequestParam(defaultValue = "asc") String order) {
-        return ResponseEntity.ok(postService.getAllPosts(page, size, sort, order));
+    public ResponseEntity<?> getAllPosts(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "id") String sort, @RequestParam(defaultValue = "asc") String order, Authentication authentication) {
+        return ResponseEntity.ok(postService.getAllPosts(page, size, sort, order, authentication));
+    }
+
+    @Operation(
+            summary = "Get all user posts",
+            description = "Get all user posts with pagination and sorting. For users. Excludes deleted posts."
+    )
+    @GetMapping("/my")
+    public ResponseEntity<?> getMyAllPosts(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, @RequestParam(defaultValue = "id") String sort, @RequestParam(defaultValue = "asc") String order, Authentication authentication) {
+        return ResponseEntity.ok(postService.getMyAllPosts(page, size, sort, order, authentication));
     }
 
     @PostMapping
@@ -109,20 +118,11 @@ public class PostController {
     @PutMapping("/{postId}/like")
     @Operation(
             summary = "Like post",
-            description = "Like post by id. For users."
+            description = "Like post by id. For users. If already liked, it will be unliked."
     )
     public ResponseEntity<?> likePost(@PathVariable Long postId, Authentication authentication) {
         PostResponse postResponse = postService.likePost(postId, authentication);
         return ResponseEntity.ok(postResponse);
     }
 
-    @DeleteMapping("/{postId}/like")
-    @Operation(
-            summary = "Unlike post",
-            description = "Unlike post by id. For users."
-    )
-    public ResponseEntity<?> unlikePost(@PathVariable Long postId, Authentication authentication) {
-        PostResponse postResponse = postService.unlikePost(postId, authentication);
-        return ResponseEntity.ok(postResponse);
-    }
 }

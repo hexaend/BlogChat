@@ -19,9 +19,7 @@ public interface PostService {
 
     PostResponse likePost(Long postId, Authentication authentication);
 
-    PostResponse unlikePost(Long postId, Authentication authentication);
-
-    Page<PostResponse> getAllPosts(int page, int size, String sort, String order);
+    Page<PostResponse> getAllPosts(int page, int size, String sort, String order, Authentication authentication);
 
     Page<PostResponse> getAllPostsAdmin(int page, int size, String sort, String order);
 
@@ -30,4 +28,6 @@ public interface PostService {
     void deletePostByAdmin(Long postId);
 
     void deleteCommentByAdmin(Long postId, Long commentId);
+
+    Page<PostResponse> getMyAllPosts(int page, int size, String sort, String order, Authentication authentication);
 }

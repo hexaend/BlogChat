@@ -1,7 +1,5 @@
 package ru.hexaend.post_service.services.impl;
 
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +21,7 @@ import ru.hexaend.post_service.repositories.PostRepository;
 import ru.hexaend.post_service.services.PostService;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -39,41 +38,43 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    @Retry(name = "postServiceRetry", fallbackMethod = "createPostFallback")
+//    @Retry(name = "postServiceRetry", fallbackMethod = "createPostFallback")
     public PostResponse createPost(PostRequest postRequest, Authentication authentication) {
-        Post myPost = postMapper.requestToEntity(postRequest);
-        myPost.setUsername(((Jwt) authentication.getPrincipal()).getClaim("preferred_username"));
-        postRepository.save(myPost);
-        return postMapper.postToResponse(myPost);
+        Post post = postMapper.requestToEntity(postRequest);
+        post.setUsername(((Jwt) authentication.getPrincipal()).getClaim("preferred_username"));
+        post = postRepository.save(post);
+        return postMapper.postToResponse(post);
     }
 
     @Override
     @Transactional
-    @CircuitBreaker(name = "postService", fallbackMethod = "getPostFallback")
-    @Retry(name = "postServiceRetry", fallbackMethod = "getPostFallback")
+//    @CircuitBreaker(name = "postService", fallbackMethod = "getPostFallback")
+//    @Retry(name = "postServiceRetry", fallbackMethod = "getPostFallback")
     public PostResponse getPost(Long id, Authentication authentication) {
         Post post = postRepository.findByIdAndDeletedIsFalse(id).orElseThrow(NotFoundPostException::new);
-        post.addView();
-        postRepository.save(post);
+        if (!post.getAuthor().equals(authentication.getName())) {
+            post.addView();
+            post = postRepository.save(post);
+        }
         return postMapper.postToResponse(post);
     }
 
 
     @Override
     @Transactional
-    @Retry(name = "postServiceRetry", fallbackMethod = "updatePostFallback")
+//    @Retry(name = "postServiceRetry", fallbackMethod = "updatePostFallback")
     public PostResponse updatePost(Long id, PostRequest postRequest, Authentication authentication) {
         Post post = postRepository.findByIdAndDeletedIsFalseAndAuthor(id, authentication.getName()).orElseThrow(NotFoundPostException::new);
 
         postMapper.partialUpdate(postRequest, post);
-        postRepository.save(post);
+        post =postRepository.save(post);
 
         return postMapper.postToResponse(post);
     }
 
     @Override
     @Transactional
-    @Retry(name = "postServiceRetry", fallbackMethod = "deletePostFallback")
+//    @Retry(name = "postServiceRetry", fallbackMethod = "deletePostFallback")
     public void deletePost(Long id, Authentication authentication) {
         Post post = postRepository.findByIdAndDeletedIsFalseAndAuthor(id, authentication.getName()).orElseThrow(NotFoundPostException::new);
 
@@ -83,34 +84,27 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    @Retry(name = "postServiceRetry", fallbackMethod = "likePostFallback")
+//    @Retry(name = "postServiceRetry", fallbackMethod = "likePostFallback")
     public PostResponse likePost(Long postId, Authentication authentication) {
         Post post = postRepository.findById(postId).orElseThrow(NotFoundPostException::new);
-        Like like = likeRepository.findByPostAndAuthor(post, authentication.getName()).orElse(Like.builder().post(post).build());
+        Optional<Like> like = likeRepository.findByPostAndAuthor(post, authentication.getName());
 
-        post.addLike(like);
-
-        postRepository.save(post);
-        return postMapper.postToResponse(post);
+        if (like.isPresent()) {
+            post.removeLike(like.get());
+            likeRepository.delete(like.get());
+            post =  postRepository.save(post);
+            return postMapper.postToResponse(post);
+        } else {
+            like = Optional.of(Like.builder().username(((Jwt) authentication.getPrincipal()).getClaim("preferred_username")).post(post).build());
+            post.addLike(like.get());
+            post =  postRepository.save(post);
+            return postMapper.postToResponse(post);
+        }
     }
 
     @Override
-    @Transactional
-    @Retry(name = "postServiceRetry", fallbackMethod = "likePostFallback")
-    public PostResponse unlikePost(Long postId, Authentication authentication) {
-        Post post = postRepository.findById(postId).orElseThrow(NotFoundPostException::new);
-        Like like = likeRepository.findByPostAndAuthor(post, authentication.getName()).orElseThrow(NotFoundLikeException::new);
-
-        post.removeLike(like);
-        likeRepository.delete(like);
-
-        postRepository.save(post);
-        return postMapper.postToResponse(post);
-    }
-
-    @Override
-    @CircuitBreaker(name = "postService", fallbackMethod = "getPostFallback")
-    public Page<PostResponse> getAllPosts(int page, int size, String sort, String order) {
+//    @CircuitBreaker(name = "postService", fallbackMethod = "getAllPostFallback")
+    public Page<PostResponse> getAllPosts(int page, int size, String sort, String order, Authentication authentication) {
         Sort sortObj = Sort.by(sort);
         if (Objects.equals(order, "desc")) {
             sortObj = sortObj.descending();
@@ -119,13 +113,19 @@ public class PostServiceImpl implements PostService {
         }
 
         Page<Post> posts = postRepository.findAllByDeletedIsFalse(PageRequest.of(page, size, sortObj));
-        posts.stream().forEach(Post::addView);
+        posts.stream().filter(p -> !Objects.equals(p.getAuthor(), authentication.getName())).forEach(Post::addView);
         postRepository.saveAll(posts);
+        posts = postRepository.findAllByDeletedIsFalse(PageRequest.of(page, size, sortObj));
         return posts.map(postMapper::postToResponse);
     }
 
+    public Page<PostResponse> getAllPostFallback(int page, int size, String sort, String order, Authentication authentication, Throwable t) {
+        log.error("Fallback for getAllPosts, reason: {}", t.toString());
+        throw new PostException("Посты не найдены. Попробуйте позже");
+    }
+
     @Override
-    @CircuitBreaker(name = "postService", fallbackMethod = "getPostFallback")
+//    @CircuitBreaker(name = "postService", fallbackMethod = "getAllPostFallback")
     public Page<PostResponse> getAllPostsAdmin(int page, int size, String sort, String order) {
 
         Sort sortObj = Sort.by(sort);
@@ -138,6 +138,7 @@ public class PostServiceImpl implements PostService {
         Page<Post> posts = postRepository.findAll(PageRequest.of(page, size, sortObj));
         posts.stream().forEach(Post::addView);
         postRepository.saveAll(posts);
+        posts = postRepository.findAll(PageRequest.of(page, size, sortObj));
         return posts.map(postMapper::postToResponse);
     }
 
@@ -146,13 +147,13 @@ public class PostServiceImpl implements PostService {
     public PostResponse updatePostByAdmin(Long postId, PostRequest postRequest) {
         Post post = postRepository.findById(postId).orElseThrow(NotFoundPostException::new);
         postMapper.partialUpdate(postRequest, post);
-        postRepository.save(post);
+        post =  postRepository.save(post);
         return postMapper.postToResponse(post);
     }
 
     @Override
     @Transactional
-    @Retry(name = "postServiceRetry", fallbackMethod = "deletePostAdminFallback")
+//    @Retry(name = "postServiceRetry", fallbackMethod = "deletePostAdminFallback")
     public void deletePostByAdmin(Long postId) {
         Post post = postRepository.findById(postId).orElseThrow(NotFoundPostException::new);
         post.setDeleted(true);
@@ -161,11 +162,27 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    @Retry(name = "postServiceRetry", fallbackMethod = "deleteCommentFallback")
+//    @Retry(name = "postServiceRetry", fallbackMethod = "deleteCommentFallback")
     public void deleteCommentByAdmin(Long postId, Long commentId) {
         Post post = postRepository.findById(postId).orElseThrow(NotFoundPostException::new);
         post.getComments().removeIf(comment -> comment.getId().equals(commentId));
         postRepository.save(post);
+    }
+
+    //    @CircuitBreaker(name = "postService", fallbackMethod = "getPostFallback")
+    @Override
+    public Page<PostResponse> getMyAllPosts(int page, int size, String sort, String order, Authentication authentication) {
+        Sort sortObj = Sort.by(sort);
+        if (Objects.equals(order, "desc")) {
+            sortObj = sortObj.descending();
+        } else {
+            sortObj = sortObj.ascending();
+        }
+
+        Page<Post> posts = postRepository.findAllByDeletedIsFalseAndAuthor(authentication.getName(), PageRequest.of(page, size, sortObj));
+        postRepository.saveAll(posts);
+        posts = postRepository.findAllByDeletedIsFalseAndAuthor(authentication.getName(), PageRequest.of(page, size, sortObj));
+        return posts.map(postMapper::postToResponse);
     }
 
 

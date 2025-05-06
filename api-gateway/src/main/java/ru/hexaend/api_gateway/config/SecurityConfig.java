@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
@@ -25,19 +26,34 @@ import org.springframework.security.web.server.authentication.logout.*;
 import org.springframework.security.web.server.header.ClearSiteDataServerHttpHeadersWriter;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.reactive.config.CorsRegistry;
+import org.springframework.web.reactive.config.WebFluxConfigurer;
+import org.springframework.web.reactive.config.WebFluxConfigurerComposite;
 
 @Configuration
 @EnableWebFluxSecurity
 public class SecurityConfig {
 
     @Bean
-    @Order(1)
+//    @Order(1)
     public SecurityWebFilterChain apiResourceServerChain(ServerHttpSecurity http) {
         http
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .authorizeExchange(
                         exchange -> exchange
                                 .pathMatchers("/actuator/**", "/access-token/**", "/id-token").permitAll()
+                                .pathMatchers(HttpMethod.OPTIONS).permitAll()
                                 .anyExchange().authenticated()
+                )
+                .cors(
+                        cors -> cors
+                                .configurationSource(request -> {
+                                    var config = new org.springframework.web.cors.CorsConfiguration();
+                                    config.addAllowedOrigin("*");
+                                    config.addAllowedMethod("*");
+                                    config.addAllowedHeader("*");
+                                    return config;
+                                })
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
@@ -46,33 +62,34 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean
-    @Order(2)
-    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity httpSecurity,
-                                                            ServerOAuth2AuthorizationRequestResolver resolver,
-                                                            ServerOAuth2AuthorizedClientRepository auth2AuthorizedClientRepository,
-                                                            ServerLogoutSuccessHandler logoutSuccessHandler,
-                                                            ServerLogoutHandler logoutHandler) {
-        httpSecurity.authorizeExchange(
-                        exchange -> exchange
-                                .pathMatchers("/actuator/**", "/access-token/**", "/id-token").permitAll()
-                                .anyExchange().authenticated()
-                )
-                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .oauth2Login(
-                        login -> login
-                                .authorizationRequestResolver(resolver)
-                                .authorizedClientRepository(auth2AuthorizedClientRepository)
-                )
-//                .oauth2ResourceServer(oauth2 -> oauth2
-//                        .jwt(Customizer.withDefaults())
+//    @Bean
+//    @Order(2)
+//    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity httpSecurity,
+//                                                            ServerOAuth2AuthorizationRequestResolver resolver,
+//                                                            ServerOAuth2AuthorizedClientRepository auth2AuthorizedClientRepository,
+//                                                            ServerLogoutSuccessHandler logoutSuccessHandler,
+//                                                            ServerLogoutHandler logoutHandler) {
+//        httpSecurity.authorizeExchange(
+//                        exchange -> exchange
+//                                .pathMatchers("/actuator/**", "/access-token/**", "/id-token").permitAll()
+//                                .pathMatchers(HttpMethod.OPTIONS).permitAll()
+//                                .anyExchange().authenticated()
 //                )
-                .logout(logout -> logout.logoutSuccessHandler(logoutSuccessHandler).logoutHandler(logoutHandler))
-        ;
-
-
-        return httpSecurity.build();
-    }
+////                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+//                .oauth2Login(
+//                        login -> login
+//                                .authorizationRequestResolver(resolver)
+//                                .authorizedClientRepository(auth2AuthorizedClientRepository)
+//                )
+////                .oauth2ResourceServer(oauth2 -> oauth2
+////                        .jwt(Customizer.withDefaults())
+////                )
+//                .logout(logout -> logout.logoutSuccessHandler(logoutSuccessHandler).logoutHandler(logoutHandler))
+//        ;
+//
+//
+//        return httpSecurity.build();
+//    }
 
 
     @Bean

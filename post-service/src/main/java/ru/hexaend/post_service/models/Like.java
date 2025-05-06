@@ -30,4 +30,7 @@ public class Like {
     @ManyToOne
     private Post post;
 
+    // TODO: СДЕЛАТЬ ФУНКЦИОНАЛЬНОСТЬ
+//    @Transient
+//    private boolean liked = false;
 }

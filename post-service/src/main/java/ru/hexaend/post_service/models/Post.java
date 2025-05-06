@@ -18,6 +18,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @EqualsAndHashCode(exclude = {"likes", "comments"})
+@ToString(exclude = {"likes", "comments"})
 @EntityListeners(AuditingEntityListener.class)
 public class Post {
 
@@ -58,7 +59,7 @@ public class Post {
     private Set<Comment> comments = new HashSet<>();
 
     @Column(nullable = false)
-    private int viewCount = 0;
+    private int viewsCount = 0;
 
     public void addComment(Comment comment) {
         comments.add(comment);
@@ -81,6 +82,6 @@ public class Post {
     }
 
     public void addView() {
-        this.viewCount++;
+        this.viewsCount++;
     }
 }
