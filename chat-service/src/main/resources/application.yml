@@ -1,0 +1,55 @@
+spring:
+    application:
+        name: chat-service
+    cloud:
+        config:
+            discovery:
+                service-id: config-server
+                enabled: true
+        openfeign:
+            oauth2:
+                enabled: true
+                clientRegistrationId: keycloak
+
+    security:
+        oauth2:
+            resourceserver:
+                jwt:
+                    issuer-uri: http://localhost:7080/realms/blog-chat
+            client:
+
+                provider:
+                    keycloak:
+                        issuer-uri: http://localhost:7080/realms/blog-chat
+
+                registration:
+                    keycloak:
+                        provider: keycloak
+                        client-id: backend
+                        client-secret: gQCPs3zXyeZWDWAGW5B3fYUuScRKvzYG
+                        authorization-grant-type: client_credentials
+
+
+
+    config:
+        import: "configserver:"
+#    data:
+#        redis:
+#            url: redis://localhost:6379/
+#            connect-timeout: 10s
+
+
+
+eureka:
+    client:
+        service-url:
+            defaultZone: http://localhost:8761/eureka
+
+server:
+    port: 8082
+
+
+#logging:
+#    level:
+#      org.springframework.*: DEBUG
+#      org.springframework.messaging: DEBUG

@@ -27,6 +27,11 @@ spring:
 
         gateway:
 
+            httpclient:
+                max-initial-line-length: 16384
+                max-header-size: 16384
+                max-chunk-size: 10485760 # 10MB, adjust as needed
+                response-timeout: 30s
 
             discovery:
                 locator:
@@ -41,12 +46,28 @@ spring:
                     filters:
                         - RewritePath=/api/chat/(?<path>.*), /$\{path}
 
+                -   id: chat-service-ws
+                    uri: lb:ws://chat-service
+                    predicates:
+                        - Path=/api/messages/**
+                    filters:
+                        - AddRequestHeader=Authorization, {request.headers.Authorization}
+                        - RewritePath=/api/messages/(?<path>.*), /$\{path}
+
+
                 -   id: post-service
                     uri: lb://post-service
                     predicates:
                         - Path=/api/post/**
                     filters:
                         - RewritePath=/api/post/(?<path>.*), /$\{path}
+
+                -   id: user-service
+                    uri: lb://user-service
+                    predicates:
+                        - Path=/api/user/**
+                    filters:
+                        - RewritePath=/api/user/(?<path>.*), /$\{path}
             default-filters:
                 - TokenRelay=
 

@@ -1,10 +1,6 @@
 spring:
     application:
         name: post-service
-    jpa:
-        hibernate:
-            ddl-auto: update
-        show-sql: false
     cloud:
         config:
             discovery:
@@ -13,11 +9,6 @@ spring:
 
     config:
         import: "configserver:"
-    security:
-        oauth2:
-            resourceserver:
-                jwt:
-                    issuer-uri: http://localhost:7080/realms/blog-chat
 
 
 eureka:
@@ -27,27 +18,3 @@ eureka:
 
 server:
     port: 8081
-
-resilience4j:
-    retry:
-        instances:
-            postServiceRetry:
-                maxAttempts: 3           # Максимум 3 попытки (1 + 2 повтора)
-                waitDuration: 1s         # Интервал ожидания между попытками
-                retryExceptions:
-                    - org.springframework.dao.QueryTimeoutException
-                    - java.io.IOException
-                ignoreExceptions:
-                    - ru.hexaend.post_service.exceptions.NotFoundPostException
-                    - ru.hexaend.post_service.exceptions.NotFoundLikeException
-                    - ru.hexaend.post_service.exceptions.NotFoundCommentException
-    circuitbreaker:
-        instances:
-            postService:
-                registerHealthIndicator: true
-                slidingWindowSize: 10
-                minimumNumberOfCalls: 5
-                permittedNumberOfCallsInHalfOpenState: 3
-                waitDurationInOpenState: 10s
-                failureRateThreshold: 50
-                eventConsumerBufferSize: 10

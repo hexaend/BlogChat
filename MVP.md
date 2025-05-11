@@ -38,7 +38,7 @@
 ## Основные микросервисы:
 - [x] auth-service - сервис авторизации.
 - [x] api-gateway - сервис API Gateway.
-- [ ] post-service - сервис постов.
+- [x] post-service - сервис постов.
 - [x] eureka - сервис Eureka.
 - [ ] chat-service - сервис чатов.
 - [x] config-service - сервис конфигурации.
@@ -47,7 +47,7 @@
 ## Примерный план:
 - [x] Реализация основной инфраструктуры (api-gateway, eureka, config-service).
 - [x] Реализация сервиса авторизации, с помощью Keycloak (auth-service).
-- [ ] Реализация сервиса постов (post-service).
+- [x] Реализация сервиса постов (post-service).
 - [ ] Реализация сервиса пользователей (user-service).
 - [ ] Реализация сервиса чатов (chat-service).
 - [ ] Реализация docker

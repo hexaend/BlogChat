@@ -138,7 +138,7 @@ public class PostServiceImpl implements PostService {
         Page<Post> posts = postRepository.findAll(PageRequest.of(page, size, sortObj));
         posts.stream().forEach(Post::addView);
         postRepository.saveAll(posts);
-        posts = postRepository.findAll(PageRequest.of(page, size, sortObj));
+//        posts = postRepository.findAll(PageRequest.of(page, size, sortObj));
         return posts.map(postMapper::postToResponse);
     }
 

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Spring WebSocket Приватный Чат</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2rem; background: #f9f9f9; }
+        #chat-container { max-width: 500px; margin: 2rem auto; background: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px #eee; padding: 2rem; }
+        #status { margin-left: 1rem; font-weight: bold; }
+        #messages { min-height: 150px; max-height: 300px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; background: #fbfbfb; margin-bottom: 1em; padding: 0.5em; }
+        .controls { display: flex; flex-direction: column; gap: 1em; margin-bottom: 1em; }
+        .controls label { display: flex; flex-direction: column; font-weight: bold; }
+        .chat-input { display: flex; gap: 0.5em; }
+        .chat-input input[type="text"] { flex: 1; }
+        .message-row { margin-bottom: 0.3em; }
+        .from-me { color: #1976d2; }
+        .from-others { color: #333; }
+        button { padding: 0.4em 1em; border: none; border-radius: 4px; background: #1976d2; color: #fff; cursor: pointer; }
+        button:disabled { background: #aaa; }
+    </style>
+</head>
+<body>
+<div id="chat-container">
+    <h2>Приватный чат через Spring WebSocket</h2>
+    <div class="controls">
+        <label>
+            Access Token:
+            <input type="text" id="accessToken" placeholder="Вставьте JWT access_token">
+        </label>
+        <label>
+            Кому:
+            <input type="text" id="to" value="user2" autocomplete="off">
+        </label>
+        <button id="connectBtn" onclick="connect()" type="button">Подключиться</button>
+        <span id="status"></span>
+    </div>
+
+    <div id="chat" style="display:none">
+        <div>
+            <b>Личные сообщения:</b>
+            <div id="messages"></div>
+        </div>
+        <form class="chat-input" onsubmit="sendMessage(); return false;">
+            <input type="text" id="content" placeholder="Сообщение" autocomplete="off">
+            <button id="sendBtn" type="submit">Отправить</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    let stompClient = null;
+    let accessToken = null;
+
+    function connect() {
+        accessToken = document.getElementById('accessToken').value.trim();
+        const toUser = document.getElementById('to').value.trim();
+
+        if (!accessToken) {
+            alert("Введите access token!");
+            return;
+        }
+
+        if (!toUser) {
+            alert("Укажите получателя.");
+            return;
+        }
+
+        document.getElementById('connectBtn').disabled = true;
+        const socket = new SockJS('/chat');
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect(
+            {
+                Authorization: 'Bearer ' + accessToken
+            },
+            frame => {
+                document.getElementById('status').textContent = 'Подключено';
+                document.getElementById('status').style.color = 'green';
+                document.getElementById('chat').style.display = 'block';
+                document.getElementById('to').readOnly = true;
+
+                stompClient.subscribe('/user/queue/messages', message => {
+                    const msg = JSON.parse(message.body);
+                    showMessage(msg.fromUsername || msg.from, msg.content);
+                });
+
+                stompClient.subscribe('/user/queue/messages/edited', message => {
+                    // Обработка редактирования
+                });
+
+                stompClient.subscribe('/user/queue/messages/deleted', message => {
+                    // Обработка удаления
+                });
+            },
+            error => {
+                document.getElementById('status').textContent = 'Ошибка подключения';
+                document.getElementById('status').style.color = 'red';
+                document.getElementById('chat').style.display = 'none';
+                document.getElementById('connectBtn').disabled = false;
+                document.getElementById('to').readOnly = false;
+            }
+        );
+    }
+
+    function sendMessage() {
+        const to = document.getElementById('to').value.trim();
+        const content = document.getElementById('content').value.trim();
+
+        if (!to || !content) {
+            alert("Заполните все поля");
+            return;
+        }
+
+        const msg = {to: to, content: content};
+        stompClient.send("/app/chat.send", {}, JSON.stringify(msg));
+        showMessage("Вы (→ " + to + ")", content, true);
+        document.getElementById('content').value = "";
+    }
+
+    function showMessage(sender, content, isMe = false) {
+        const div = document.getElementById('messages');
+        const messageRow = document.createElement('div');
+        messageRow.className = 'message-row ' + (isMe ? 'from-me' : 'from-others');
+        messageRow.innerHTML = `<b>${escapeHtml(sender)}:</b> ${escapeHtml(content)}`;
+        div.appendChild(messageRow);
+        div.scrollTop = div.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+        const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+</script>
+</body>
+</html>
