@@ -7,17 +7,17 @@ services:
             KC_BOOTSTRAP_ADMIN_USERNAME: "admin"
             KC_BOOTSTRAP_ADMIN_PASSWORD: "password"
             KC_HEALTH_ENABLED: true
-
         healthcheck:
             test: [ "CMD", "curl", "-f", "http://localhost:7080/health/ready" ]
             interval: 15s
             timeout: 2s
             retries: 15
-
         command: [ "start-dev", "--http-port=7080", "--https-port=7443" ]
         ports:
             - "7080:7080"
             - "7443:7443"
+        depends_on:
+            - postgres
 
     postgres:
         image: postgres:latest
@@ -32,7 +32,6 @@ services:
         volumes:
             - .:/docker-entrypoint-initdb.d
             - my-data:/var/lib/postgresql/data
-
         healthcheck:
             test: [ "CMD-SHELL", "pg_isready -U habrpguser -d habrdb" ]
             interval: 10s
@@ -46,15 +45,58 @@ services:
                     cpus: '1'
                     memory: 4G
 
-#    redis:
-#        image: redis:latest
-#        container_name: redis
-#        ports:
-#            - "6379:6379"
-#        volumes:
-#            - cache:/data
+    api-gateway:
+        image: hexaend/api-gateway:spring-plugin
+        ports:
+            - "8080:8080"
+        depends_on:
+            - config-server
+            - eureka-server
+            - user-service
+            - post-service
+            - chat-serivce
 
+    chat-serivce:
+        image: hexaend/chat-service:spring-plugin
+        ports:
+            - "8082:8082"
+        depends_on:
+            - config-server
+            - eureka-server
+            - postgres
+
+    config-server:
+        image: hexaend/config-server:spring-plugin
+        ports:
+            - "8888:8888"
+        depends_on:
+            - eureka-server
+
+
+    eureka-server:
+        image: hexaend/eureka-server:spring-plugin
+        ports:
+            - "8761:8761"
+        depends_on:
+            - postgres
+
+    post-service:
+        image: hexaend/post-service:spring-plugin
+        ports:
+            - "8081:8081"
+        depends_on:
+            - config-server
+            - eureka-server
+            - postgres
+
+    user-service:
+        image: hexaend/user-service:spring-plugin
+        ports:
+            - "8083:8083"
+        depends_on:
+            - config-server
+            - eureka-server
+            - postgres
 
 volumes:
     my-data:
-#    cache:

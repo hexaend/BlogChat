@@ -40,17 +40,17 @@
 - [x] api-gateway - сервис API Gateway.
 - [x] post-service - сервис постов.
 - [x] eureka - сервис Eureka.
-- [ ] chat-service - сервис чатов.
+- [x] chat-service - сервис чатов.
 - [x] config-service - сервис конфигурации.
-- [ ] user-service - сервис пользователей.
+- [x] user-service - сервис пользователей.
 
 ## Примерный план:
 - [x] Реализация основной инфраструктуры (api-gateway, eureka, config-service).
 - [x] Реализация сервиса авторизации, с помощью Keycloak (auth-service).
 - [x] Реализация сервиса постов (post-service).
-- [ ] Реализация сервиса пользователей (user-service).
-- [ ] Реализация сервиса чатов (chat-service).
-- [ ] Реализация docker
+- [x] Реализация сервиса пользователей (user-service).
+- [x] Реализация сервиса чатов (chat-service).
+- [x] Реализация docker
 
 ## Идеи на будущее:
 - [ ] Разделить post-service на два микросервиса: post-service и comment-service.
