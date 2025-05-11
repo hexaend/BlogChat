@@ -1,0 +1,19 @@
+spring:
+    datasource:
+        url: jdbc:postgresql://localhost:5432/blog_chat
+        username: spring_admin
+        password: password
+
+        driver-class-name: org.postgresql.Driver
+
+
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: false
+
+    security:
+        oauth2:
+            resourceserver:
+                jwt:
+                    issuer-uri: http://localhost:7080/realms/blog-chat

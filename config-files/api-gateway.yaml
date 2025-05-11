@@ -3,8 +3,11 @@ management:
         gateway:
             enabled: true
 
+logging:
+    level:
+        com.netflix.eureka: OFF
+        com.netflix.discovery: OFF
+
 
 server:
     port: 8080
-
-debug: true
