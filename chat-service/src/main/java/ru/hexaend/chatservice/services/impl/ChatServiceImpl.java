@@ -131,8 +131,7 @@ public class ChatServiceImpl implements ChatService {
         EditMessageNotification editMessageNotification = new EditMessageNotification(
                 from,
                 chatMessage.getUsername(),
-                fromUsername
-                ,
+                fromUsername,
                 privateChat.getId(),
                 chatMessage.getContent(),
                 chatMessage.getMessageId(),

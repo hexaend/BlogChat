@@ -19,6 +19,8 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
+import java.security.Security;
+
 @Slf4j
 @EnableWebSocketMessageBroker
 @Configuration
@@ -32,7 +34,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     }
 
-
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.enableSimpleBroker("/queue");
@@ -44,6 +45,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/chat")
                 .setAllowedOriginPatterns("*")
+//                .setAllowedOrigins("*")
+                .setAllowedOrigins("http://localhost:5173")
                 .withSockJS();
 
     }
@@ -53,6 +56,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         registration.interceptors(new ChannelInterceptor() {
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
+                log.info("preSend: message={}", message);
                 StompHeaderAccessor accessor = MessageHeaderAccessor.getAccessor(message, StompHeaderAccessor.class);
                 if (StompCommand.CONNECT.equals(accessor.getCommand())) {
                     String token = accessor.getFirstNativeHeader("Authorization");
@@ -63,6 +67,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         var context = SecurityContextHolder.createEmptyContext();
                         accessor.setUser(authentication);
                         context.setAuthentication(authentication);
+                        log.debug("CONNECT: user={}, token={}", authentication.getName(), token);
+                        SecurityContextHolder.setContext(context);
                     } else {
                         throw new IllegalArgumentException("Missing Authorization header");
                     }

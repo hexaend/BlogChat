@@ -24,14 +24,14 @@ public class SecurityConfig {
                     oauth.jwt(Customizer.withDefaults());
                 })
                 .cors(
-                        cors -> cors
-                                .configurationSource(request -> {
-                                    var config = new org.springframework.web.cors.CorsConfiguration();
-                                    config.addAllowedOrigin("*");
-                                    config.addAllowedMethod("*");
-                                    config.addAllowedHeader("*");
-                                    return config;
-                                })
+                        cors -> cors.configurationSource(request -> {
+                            var config = new org.springframework.web.cors.CorsConfiguration();
+                            config.addAllowedOrigin("http://localhost:5173/");
+                            config.addAllowedMethod("*");
+                            config.addAllowedHeader("*");
+                            config.setAllowCredentials(true);
+                            return config;
+                        })
                 )
                 .csrf(AbstractHttpConfigurer::disable)
                 .oauth2Client(Customizer.withDefaults())
