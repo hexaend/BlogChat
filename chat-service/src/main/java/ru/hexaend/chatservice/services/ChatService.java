@@ -6,6 +6,7 @@ import org.springframework.security.core.Authentication;
 import ru.hexaend.chatservice.dto.request.ChatMessage;
 import ru.hexaend.chatservice.dto.request.DeleteMessage;
 import ru.hexaend.chatservice.dto.request.EditMessage;
+import ru.hexaend.chatservice.dto.response.MessageDto;
 import ru.hexaend.chatservice.dto.response.PrivateChatDto;
 
 import java.util.List;
@@ -15,4 +16,5 @@ public interface ChatService {
     void deleteMessage(String from, DeleteMessage chatMessage);
     void editMessage(String from, EditMessage messageDto);
     Page<PrivateChatDto> getAllChats(int page, int size, String sort, String order, Authentication authentication);
+    Page<MessageDto> getMessages(long chat, int page, int size, String sort, String order, Authentication authentication);
 }

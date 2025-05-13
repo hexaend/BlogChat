@@ -10,12 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.hexaend.chatservice.dto.request.ChatMessage;
 import ru.hexaend.chatservice.dto.request.DeleteMessage;
 import ru.hexaend.chatservice.dto.request.EditMessage;
-import ru.hexaend.chatservice.dto.response.CreateMessageNotification;
-import ru.hexaend.chatservice.dto.response.DeleteMessageNotification;
-import ru.hexaend.chatservice.dto.response.EditMessageNotification;
-import ru.hexaend.chatservice.dto.response.PrivateChatDto;
+import ru.hexaend.chatservice.dto.response.*;
 import ru.hexaend.chatservice.feign.FeignUserService;
 import ru.hexaend.chatservice.mappers.ChatMapper;
+import ru.hexaend.chatservice.mappers.MessageMapper;
 import ru.hexaend.chatservice.models.Message;
 import ru.hexaend.chatservice.models.PrivateChat;
 import ru.hexaend.chatservice.repositories.ChatRepository;
@@ -24,6 +22,7 @@ import ru.hexaend.chatservice.services.ChatService;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class ChatServiceImpl implements ChatService {
@@ -32,14 +31,16 @@ public class ChatServiceImpl implements ChatService {
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final ChatMapper chatMapper;
     private final MessageRepository messageRepository;
+    private final MessageMapper messageMapper;
 
     public ChatServiceImpl(ChatRepository chatRepository, FeignUserService feignUserService, SimpMessagingTemplate simpMessagingTemplate, ChatMapper chatMapper,
-                           MessageRepository messageRepository) {
+                           MessageRepository messageRepository, MessageMapper messageMapper) {
         this.chatRepository = chatRepository;
         this.feignUserService = feignUserService;
         this.simpMessagingTemplate = simpMessagingTemplate;
         this.chatMapper = chatMapper;
         this.messageRepository = messageRepository;
+        this.messageMapper = messageMapper;
     }
 
     @Override
@@ -155,5 +156,21 @@ public class ChatServiceImpl implements ChatService {
         Page<PrivateChat> privateChats = chatRepository.findAllByAuthorId(authentication.getName(), PageRequest.of(page, size, sortObj));
 
         return privateChats.map(chatMapper::toPrivateChatDto);
+    }
+
+    @Override
+    public Page<MessageDto> getMessages(long chat, int page, int size, String sort, String order, Authentication authentication) {
+        Sort sortObj = Sort.by(sort);
+        if (Objects.equals(order, "desc")) {
+            sortObj = sortObj.descending();
+        } else {
+            sortObj = sortObj.ascending();
+        }
+
+        PrivateChat privateChat = chatRepository.findFirstById(chat).orElseThrow(RuntimeException::new);
+
+        Page<Message> messages = messageRepository.findAllByPrivateChat(privateChat, PageRequest.of(page, size, sortObj));
+
+        return messages.map(messageMapper::toMessageDto);
     }
 }

@@ -16,4 +16,6 @@ public interface ChatRepository extends JpaRepository<PrivateChat, Long> {
     Optional<PrivateChat> findByRecipientId(String recipientId);
 
     Page<PrivateChat> findAllByAuthorId(String authorId, Pageable pageable);
+
+    Optional<PrivateChat> findFirstById(Long id);
 }
